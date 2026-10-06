@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- PWA -->
+<meta name="theme-color" content="#7B61FF">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rutina">
+<meta name="application-name" content="Rutina">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<title>Rutina Completa · Sary</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Syne+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0A0A0F;
+    --surface: #12121A;
+    --surface2: #1A1A26;
+    --border: #2A2A3A;
+    --text: #E8E8F0;
+    --muted: #6A6A8A;
+    --prog: #4ECDC4;
+    --eng: #FFD166;
+    --com: #7B61FF;
+    --dis: #FF6B9D;
+    --esc: #61FFD4;
+    --ms: #FF9A3C;
+    --lect: #A8E6CF;
+    --plan: #C9B1FF;
+    --bien: #98D8C8;
+    --car: #FF8B94;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100vh; }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 700px 500px at 90% 10%, rgba(123,97,255,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 500px 400px at 5% 90%, rgba(78,205,196,0.05) 0%, transparent 70%),
+      radial-gradient(ellipse 400px 300px at 50% 50%, rgba(255,107,157,0.03) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .wrap { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; padding: 36px 20px 80px; }
+
+  /* HEADER */
+  .eyebrow {
+    font-family: 'Syne Mono', monospace;
+    font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--com); margin-bottom: 14px; display: block;
+  }
+
+  h1 { font-size: clamp(38px, 9vw, 70px); font-weight: 800; line-height: 0.95; letter-spacing: -2px; margin-bottom: 16px; }
+  h1 em { color: var(--dis); font-style: normal; }
+
+  .subtitle { font-size: 14px; color: var(--muted); line-height: 1.7; max-width: 500px; margin-bottom: 36px; }
+
+  /* LEGEND */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 36px;
+  }
+  .leg {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 5px 12px;
+    font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 1px;
+  }
+  .leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* DAY TABS */
+  .day-tabs {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 6px; margin-bottom: 28px;
+  }
+  .day-btn {
+    padding: 12px 4px; border: 1px solid var(--border);
+    background: var(--surface); border-radius: 10px;
+    font-family: 'Syne Mono', monospace; font-size: 10px;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: var(--muted); cursor: pointer; transition: all 0.2s;
+    text-align: center;
+  }
+  .day-btn:hover { border-color: var(--com); color: var(--text); }
+  .day-btn.active { background: var(--surface2); border-color: var(--com); color: var(--text); }
+  .day-btn small { display: block; font-size: 9px; margin-top: 3px; color: var(--muted); }
+
+  /* SCHEDULE */
+  .day-schedule { display: none; animation: fadeUp 0.3s ease; }
+  .day-schedule.active { display: block; }
+
+  @keyframes fadeUp { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+
+  .day-focus {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;
+    font-size: 13px; color: var(--muted); line-height: 1.6;
+  }
+  .day-focus strong { color: var(--text); }
+
+  .schedule-grid { display: flex; flex-direction: column; gap: 10px; }
+
+  .slot {
+    display: grid;
+    grid-template-columns: 100px 1fr auto;
+    gap: 14px; align-items: center;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px;
+    cursor: pointer; transition: all 0.2s;
+    position: relative; overflow: hidden;
+  }
+
+  .slot::before {
+    content: ''; position: absolute;
+    left: 0; top: 0; bottom: 0; width: 3px;
+  }
+
+  .slot:hover { border-color: var(--border); transform: translateX(3px); }
+  .slot.done { opacity: 0.45; }
+  .slot.done .slot-check { background: var(--com); border-color: var(--com); color: white; }
+
+  .slot-time {
+    font-family: 'Syne Mono', monospace; font-size: 11px;
+    color: var(--muted); letter-spacing: 0.5px; line-height: 1.4;
+  }
+
+  .slot-body {}
+  .slot-name { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+  .slot-detail { font-size: 12px; color: var(--muted); line-height: 1.5; font-weight: 400; }
+
+  .slot-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+
+  .slot-badge {
+    font-family: 'Syne Mono', monospace; font-size: 9px;
+    letter-spacing: 1px; padding: 3px 8px; border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .slot-check {
+    width: 20px; height: 20px; border: 1.5px solid var(--border);
+    border-radius: 5px; display: flex; align-items: center;
+    justify-content: center; font-size: 11px; transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .slot-dur {
+    font-family: 'Syne Mono', monospace; font-size: 10px; color: var(--muted);
+  }
+
+  /* color strips */
+  .c-prog::before { background: var(--prog); }
+  .c-eng::before { background: var(--eng); }
+  .c-com::before { background: var(--com); }
+  .c-dis::before { background: var(--dis); }
+  .c-esc::before { background: var(--esc); }
+  .c-ms::before { background: var(--ms); }
+  .c-lect::before { background: var(--lect); }
+  .c-plan::before { background: var(--plan); }
+  .c-bien::before { background: var(--bien); }
+  .c-car::before { background: var(--car); }
+  .c-rest::before { background: var(--border); }
+
+  /* badges */
+  .b-prog { background: rgba(78,205,196,0.12); color: var(--prog); }
+  .b-eng { background: rgba(255,209,102,0.12); color: var(--eng); }
+  .b-com { background: rgba(123,97,255,0.12); color: var(--com); }
+  .b-dis { background: rgba(255,107,157,0.12); color: var(--dis); }
+  .b-esc { background: rgba(97,255,212,0.12); color: var(--esc); }
+  .b-ms { background: rgba(255,154,60,0.12); color: var(--ms); }
+  .b-lect { background: rgba(168,230,207,0.12); color: var(--lect); }
+  .b-plan { background: rgba(201,177,255,0.12); color: var(--plan); }
+  .b-bien { background: rgba(152,216,200,0.12); color: var(--bien); }
+  .b-car { background: rgba(255,139,148,0.12); color: var(--car); }
+  .b-rest { background: rgba(100,100,120,0.12); color: var(--muted); }
+
+  /* SEPARATOR */
+  .sep {
+    display: flex; align-items: center; gap: 12px;
+    margin: 6px 0; font-family: 'Syne Mono', monospace;
+    font-size: 9px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase;
+  }
+  .sep::before, .sep::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* WEEKLY SUMMARY */
+  .summary {
+    margin-top: 32px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 14px; padding: 22px 20px;
+  }
+  .summary-title {
+    font-family: 'Syne Mono', monospace; font-size: 10px;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 18px;
+  }
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .sum-item { display: flex; align-items: center; gap: 10px; }
+  .sum-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .sum-info { flex: 1; }
+  .sum-name { font-size: 13px; font-weight: 600; }
+  .sum-time { font-family: 'Syne Mono', monospace; font-size: 10px; color: var(--muted); }
+  .sum-bar-track { margin-top: 4px; height: 3px; background: var(--border); border-radius: 2px; }
+  .sum-bar-fill { height: 100%; border-radius: 2px; }
+
+  /* RULES */
+  .rules {
+    margin-top: 24px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 14px; padding: 20px;
+  }
+  .rules h3 { font-size: 13px; font-weight: 700; color: var(--dis); margin-bottom: 14px; }
+  .rule { display: flex; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .rule:last-child { border-bottom: none; }
+  .rule-n { font-family: 'Syne Mono', monospace; font-size: 10px; color: var(--com); min-width: 20px; margin-top: 2px; }
+
+  .quote { margin-top: 36px; text-align: center; padding: 32px 20px; }
+  .quote p { font-size: clamp(20px, 4vw, 28px); font-weight: 800; line-height: 1.2; letter-spacing: -0.5px; }
+  .quote p span { color: var(--dis); }
+  .quote small { display: block; margin-top: 10px; font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 2px; color: var(--muted); }
+
+  @media (max-width: 500px) {
+    .slot { grid-template-columns: 80px 1fr auto; gap: 10px; }
+    .day-tabs { grid-template-columns: repeat(5, 1fr); }
+    .day-btn { font-size: 9px; padding: 10px 2px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <span class="eyebrow">Plan Tiempo Completo · Post Bootcamp · Sary</span>
+  <h1>Cada día,<br><em>con intención.</em></h1>
+  <p class="subtitle">Día libre · Horario nocturno · 7 materias · Lunes a viernes intensivo + fin de semana ligero. El objetivo es avanzar en todo sin quemarse.</p>
+
+  <!-- LEYENDA -->
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="background:var(--prog)"></div>Programación</div>
+    <div class="leg"><div class="leg-dot" style="background:var(--eng)"></div>Inglés</div>
+    <div class="leg"><div class="leg-dot" style="background:var(--com)"></div>Comunicación</div>
+    <div class="leg"><div class="leg-dot" style="background:var(--dis)"></div>Diseño</div>
+    <div class="leg"><div class="leg-dot" style="background:var(--esc)"></div>Escritura</div>
+    <div class="leg"><div class="leg-dot" style="background:var(--ms)"></div>MS365</div>
+    <div class="leg"><div class="leg-dot" style="background:var(--car)"></div>Carrera</div>
+  </div>
+
+  <!-- DAY TABS -->
+  <div class="day-tabs">
+    <button class="day-btn active" onclick="showDay('lun')">LUN<small>Prog+Eng</small></button>
+    <button class="day-btn" onclick="showDay('mar')">MAR<small>Com+Esc</small></button>
+    <button class="day-btn" onclick="showDay('mie')">MIÉ<small>Prog+Dis</small></button>
+    <button class="day-btn" onclick="showDay('jue')">JUE<small>Eng+MS</small></button>
+    <button class="day-btn" onclick="showDay('vie')">VIE<small>Carrera</small></button>
+  </div>
+
+  <!-- LUNES -->
+  <div class="day-schedule active" id="day-lun">
+    <div class="day-focus">
+      <strong>Lunes — Programación + Inglés.</strong> Empiezas la semana con lo más técnico y lo más urgente. Mañana suave, tarde de estudio profundo, noche de práctica.
+    </div>
+    <div class="schedule-grid">
+
+      <div class="sep">Mañana</div>
+
+      <div class="slot c-bien" onclick="toggle(this)">
+        <div class="slot-time">8:30<br>9:00</div>
+        <div class="slot-body">
+          <div class="slot-name">Despertar & rutina física</div>
+          <div class="slot-detail">Agua, movimiento, desayuno. No empezar con el celular. El cuerpo primero.</div>
+        </div>
+        <div class="slot-right">
+          <span class="slot-badge b-bien">BIENESTAR</span>
+          <div class="slot-dur">30 min</div>
+          <div class="slot-check"></div>
+        </div>
+      </div>
+
+      <div class="slot c-eng" onclick="toggle(this)">
+        <div class="slot-time">9:00<br>9:30</div>
+        <div class="slot-body">
+          <div class="slot-name">Inglés — lectura técnica</div>
+          <div class="slot-detail">Artículo o documentación de Java/Spring en inglés. Leer despacio, anotar 3 palabras nuevas.</div>
+        </div>
+        <div class="slot-right">
+          <span class="slot-badge b-eng">INGLÉS</span>
+          <div class="slot-dur">30 min</div>
+          <div class="slot-check"></div>
+        </div>
+      </div>
+
+      <div class="sep">Bloque Principal</div>
+
+      <div class="slot c-prog" onclick="toggle(this)">
+        <div class="slot-time">10:00<br>12:00</div>
+        <div class="slot-body">
+          <div class="slot-name">Programación — bloque profundo</div>
+          <div class="slot-detail">Java, Spring Boot, o proyecto de portfolio. Construir algo que funcione. Sin interrupciones — modo focus.</div>
+        </div>
+        <div class="slot-right">
+          <span class="slot-badge b-prog">PROG</span>
+          <div class="slot-dur">2h</div>
+          <div class="slot-check"></div>
+        </div>
+      </div>
+
+      <div class="slot c-rest" onclick="toggle(this)">
+        <div class="slot-time">12:00<br>13:00</div>
+        <div class="slot-body">
+          <div class="slot-name">Almuerzo & descanso</div>
+          <div class="slot-detail">Lejos de la pantalla. Caminar, música, comer bien. El cerebro necesita este corte.</div>
+        </div>
+        <div class="slot-right">
+          <span class="slot-badge b-rest">DESCANSO</span>
+          <div class="slot-dur">1h</div>
+          <div class="slot-check"></div>
+        </div>
+      </div>
+
+      <div class="sep">Tarde</div>
+
+      <div class="slot c-prog" onclick="toggle(this)">
+        <div class="slot-time">13:00<br>14:30</div>
+        <div class="slot-body">
+          <div class="slot-name">Programación — continuar o nuevo ejercicio</div>
+          <div class="slot-detail">Si avanzaste bien, continúa. Si no, cambia a ejercicios de lógica o un tutorial específico de algo que no dominas.</div>
+        </div>
+        <div class="slot-right">
+          <span class="slot-badge b-prog">PROG</span>
+          <div class="slot-dur">1.5h</div>
+          <div class="slot-check"></div>
+        </div>
+      </div>
+
+      <div class="slot c-eng" onclick="toggle(this)">
+        <div class="slot-time">14:30<br>15:15</div>
+        <div class="slot-body">
+          <div class="slot-name">Inglés — listening o shadowing</div>
+          <div class="slot-detail">Podcast Syntax.fm o Desperate Housewives con subtítulos en inglés. Repetir frases en voz alta 5 min al final.</div>
+        </div>
+        <div class="slot-right">
+          <span class="slot-badge b-eng">INGLÉS</span>
+          <div class="slot-dur">45 min</div>
+          <div class="slot-check"></div>
+        </div>
+      </div>
+
+      <div class="slot c-rest" onclick="toggle(this)">
+        <div class="slot-time">15:15<br>16:30</div>
+        <div class="slot-body">
+          <div class="slot-name">Pausa libre</div>
+          <div class="slot-detail">Tiempo para ti. Sin culpa. Esta pausa es lo que hace que la noche funcione.</div>
+        </div>
+        <div class="slot-right">
+          <span class="slot-badge b-rest">LIBRE</span>
+          <div class="slot-dur">1h</div>
+          <div class="slot-check"></div>
+        </div>
+      </div>
+
+      <div class="sep">Noche</div>
+
+      <div class="slot c-prog" onclick="toggle(this)">
+        <div class="slot-time">16:30<br>18:00</div>
+        <div class="slot-body">
+          <div class="slot-name">Programación — documentar y subir a GitHub</div>
+          <div class="slot-detail">Lo que construiste hoy: comentarlo, documentarlo, subirlo. Un commit diario es tu historial de crecimiento.</div>
+        </div>
+        <div class="slot-right">
+          <span class="slot-badge b-prog">PROG</span>
+          <div class="slot-dur">1.5h</div>
+          <div class="slot-check"></div>
+        </div>
+      </div>
+
+      <div class="slot c-esc" onclick="toggle(this)">
+        <div class="slot-time">18:00<br>18:20</div>
+        <div class="slot-body">
+          <div class="slot-name">Escritura — 3 oraciones del día</div>
+          <div class="slot-detail">¿Qué aprendí hoy? ¿Qué me costó? ¿Qué voy a hacer diferente mañana? Sin perfeccionismo.</div>
+        </div>
+        <div class="slot-right">
+          <span class="slot-badge b-esc">ESCRITURA</span>
+          <div class="slot-dur">20 min</div>
+          <div class="slot-check"></div>
+        </div>
+      </div>
+
+      <div class="slot c-lect" onclick="toggle(this)">
+        <div class="slot-time">18:20<br>18:50</div>
+        <div class="slot-body">
+          <div class="slot-name">Lectura — libro técnico o personal</div>
+          <div class="slot-detail">Alterna semanas: técnico (Java, arquitectura) y personal (comunicación, mentalidad, finanzas).</div>
+        </div>
+        <div class="slot-right">
+          <span class="slot-badge b-lect">LECTURA</span>
+          <div class="slot-dur">30 min</div>
+          <div class="slot-check"></div>
+        </div>
+      </div>
+
+      <div class="slot c-plan" onclick="toggle(this)">
+        <div class="slot-time">18:50<br>19:00</div>
+        <div class="slot-body">
+          <div class="slot-name">Revisión y plan del mañana</div>
+          <div class="slot-detail">¿Cumplí lo de hoy? ¿Qué 3 cosas importan mañana? Escríbelas. Cierra el día con intención.</div>
+        </div>
+        <div class="slot-right">
+          <span class="slot-badge b-plan">PLAN</span>
+          <div class="slot-dur">10 min</div>
+          <div class="slot-check"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MARTES -->
+  <div class="day-schedule" id="day-mar">
+    <div class="day-focus">
+      <strong>Martes — Comunicación + Escritura.</strong> El día de tu voz. Practicas cómo te expresas, cómo escribes, cómo te presentas. El inglés sigue presente pero en modo secundario.
+    </div>
+    <div class="schedule-grid">
+
+      <div class="sep">Mañana</div>
+
+      <div class="slot c-bien" onclick="toggle(this)">
+        <div class="slot-time">8:30<br>9:00</div>
+        <div class="slot-body"><div class="slot-name">Despertar & rutina física</div><div class="slot-detail">Igual que siempre. El cuerpo primero.</div></div>
+        <div class="slot-right"><span class="slot-badge b-bien">BIENESTAR</span><div class="slot-dur">30 min</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-eng" onclick="toggle(this)">
+        <div class="slot-time">9:00<br>9:30</div>
+        <div class="slot-body">
+          <div class="slot-name">Inglés — vocabulario activo</div>
+          <div class="slot-detail">Anki o lista propia de palabras. Practicar usarlas en oraciones propias, no solo memorizarlas.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-eng">INGLÉS</span><div class="slot-dur">30 min</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="sep">Bloque Principal</div>
+
+      <div class="slot c-com" onclick="toggle(this)">
+        <div class="slot-time">10:00<br>11:00</div>
+        <div class="slot-body">
+          <div class="slot-name">Comunicación — estudio (videos)</div>
+          <div class="slot-detail">2–3 videos de Víctor Toscano o Sebastián Lora. Tomar nota de UNA técnica que aplicarás hoy.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-com">COM</span><div class="slot-dur">1h</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-com" onclick="toggle(this)">
+        <div class="slot-time">11:00<br>11:45</div>
+        <div class="slot-body">
+          <div class="slot-name">Comunicación — práctica en voz alta</div>
+          <div class="slot-detail">Grábate 2 min explicando un tema que domines. Escúchate. Mejora UNA cosa. Repite. Esto es lo que cambia todo.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-com">COM</span><div class="slot-dur">45 min</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-rest" onclick="toggle(this)">
+        <div class="slot-time">12:00<br>13:00</div>
+        <div class="slot-body"><div class="slot-name">Almuerzo & descanso</div><div class="slot-detail">Desconéctate. Recarga.</div></div>
+        <div class="slot-right"><span class="slot-badge b-rest">DESCANSO</span><div class="slot-dur">1h</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="sep">Tarde</div>
+
+      <div class="slot c-esc" onclick="toggle(this)">
+        <div class="slot-time">13:00<br>14:30</div>
+        <div class="slot-body">
+          <div class="slot-name">Escritura profesional — lección + ejercicio</div>
+          <div class="slot-detail">Curso Edutin o correccionencastellano.com. Después: escribe un email ficticio o un párrafo de LinkedIn. Aplica lo aprendido.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-esc">ESCRITURA</span><div class="slot-dur">1.5h</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-ms" onclick="toggle(this)">
+        <div class="slot-time">14:30<br>15:15</div>
+        <div class="slot-body">
+          <div class="slot-name">Microsoft 365 — tutorial práctico</div>
+          <div class="slot-detail">Word, Excel o PowerPoint. Un tutorial de YouTube + reproducirlo tú misma. Manos en el teclado, no solo ver.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-ms">MS365</span><div class="slot-dur">45 min</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-rest" onclick="toggle(this)">
+        <div class="slot-time">15:15<br>16:30</div>
+        <div class="slot-body"><div class="slot-name">Pausa libre</div><div class="slot-detail">Tiempo para ti.</div></div>
+        <div class="slot-right"><span class="slot-badge b-rest">LIBRE</span><div class="slot-dur">1h</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="sep">Noche</div>
+
+      <div class="slot c-prog" onclick="toggle(this)">
+        <div class="slot-time">16:30<br>18:00</div>
+        <div class="slot-body">
+          <div class="slot-name">Programación — mantenimiento</div>
+          <div class="slot-detail">No es día de aprender cosas nuevas. Revisar código anterior, limpiar, refactorizar, o hacer un ejercicio pequeño. Mantener el ritmo.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-prog">PROG</span><div class="slot-dur">1.5h</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-esc" onclick="toggle(this)">
+        <div class="slot-time">18:00<br>18:20</div>
+        <div class="slot-body"><div class="slot-name">Escritura — 3 oraciones del día</div><div class="slot-detail">Lo aprendido, lo que costó, lo que cambio mañana.</div></div>
+        <div class="slot-right"><span class="slot-badge b-esc">ESCRITURA</span><div class="slot-dur">20 min</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-lect" onclick="toggle(this)">
+        <div class="slot-time">18:20<br>18:50</div>
+        <div class="slot-body"><div class="slot-name">Lectura</div><div class="slot-detail">Hoy: libro de comunicación o desarrollo personal.</div></div>
+        <div class="slot-right"><span class="slot-badge b-lect">LECTURA</span><div class="slot-dur">30 min</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-plan" onclick="toggle(this)">
+        <div class="slot-time">18:50<br>19:00</div>
+        <div class="slot-body"><div class="slot-name">Plan del mañana</div><div class="slot-detail">3 cosas que importan mañana. Escríbelas.</div></div>
+        <div class="slot-right"><span class="slot-badge b-plan">PLAN</span><div class="slot-dur">10 min</div><div class="slot-check"></div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MIÉRCOLES -->
+  <div class="day-schedule" id="day-mie">
+    <div class="day-focus">
+      <strong>Miércoles — Programación + Diseño.</strong> Mitad de semana, segundo bloque técnico profundo. El diseño entra en la tarde como contraste creativo al código.
+    </div>
+    <div class="schedule-grid">
+
+      <div class="sep">Mañana</div>
+
+      <div class="slot c-bien" onclick="toggle(this)">
+        <div class="slot-time">8:30<br>9:00</div>
+        <div class="slot-body"><div class="slot-name">Despertar & rutina física</div><div class="slot-detail">Agua, movimiento, desayuno.</div></div>
+        <div class="slot-right"><span class="slot-badge b-bien">BIENESTAR</span><div class="slot-dur">30 min</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-eng" onclick="toggle(this)">
+        <div class="slot-time">9:00<br>9:30</div>
+        <div class="slot-body">
+          <div class="slot-name">Inglés — writing corto</div>
+          <div class="slot-detail">Escribe 5–8 oraciones en inglés sobre algo que aprendiste ayer. No traduzcas — piensa en inglés.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-eng">INGLÉS</span><div class="slot-dur">30 min</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="sep">Bloque Principal</div>
+
+      <div class="slot c-prog" onclick="toggle(this)">
+        <div class="slot-time">10:00<br>12:00</div>
+        <div class="slot-body">
+          <div class="slot-name">Programación — bloque profundo</div>
+          <div class="slot-detail">Continuar portfolio o aprender algo específico: APIs REST, bases de datos, autenticación. Enfocada en un solo tema.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-prog">PROG</span><div class="slot-dur">2h</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-rest" onclick="toggle(this)">
+        <div class="slot-time">12:00<br>13:00</div>
+        <div class="slot-body"><div class="slot-name">Almuerzo & descanso</div><div class="slot-detail">Desconéctate. Recarga.</div></div>
+        <div class="slot-right"><span class="slot-badge b-rest">DESCANSO</span><div class="slot-dur">1h</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="sep">Tarde</div>
+
+      <div class="slot c-dis" onclick="toggle(this)">
+        <div class="slot-time">13:00<br>14:30</div>
+        <div class="slot-body">
+          <div class="slot-name">Diseño Digital — lección + práctica</div>
+          <div class="slot-detail">Figma básico o Canva profesional. Tutorial + reproducirlo. Meta: que puedas diseñar tu propio portfolio y CV visual.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-dis">DISEÑO</span><div class="slot-dur">1.5h</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-eng" onclick="toggle(this)">
+        <div class="slot-time">14:30<br>15:15</div>
+        <div class="slot-body">
+          <div class="slot-name">Inglés — listening activo</div>
+          <div class="slot-detail">Serie o película en inglés con subtítulos en inglés. Pausa cuando no entiendes — busca, anota, continúa.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-eng">INGLÉS</span><div class="slot-dur">45 min</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-rest" onclick="toggle(this)">
+        <div class="slot-time">15:15<br>16:30</div>
+        <div class="slot-body"><div class="slot-name">Pausa libre</div><div class="slot-detail">Tiempo para ti.</div></div>
+        <div class="slot-right"><span class="slot-badge b-rest">LIBRE</span><div class="slot-dur">1h</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="sep">Noche</div>
+
+      <div class="slot c-prog" onclick="toggle(this)">
+        <div class="slot-time">16:30<br>18:00</div>
+        <div class="slot-body">
+          <div class="slot-name">Programación — cerrar y documentar</div>
+          <div class="slot-detail">Lo de hoy: bien comentado, subido a GitHub, README actualizado. La documentación es parte del trabajo.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-prog">PROG</span><div class="slot-dur">1.5h</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-esc" onclick="toggle(this)">
+        <div class="slot-time">18:00<br>18:20</div>
+        <div class="slot-body"><div class="slot-name">Escritura — 3 oraciones del día</div><div class="slot-detail">Lo aprendido, lo que costó, lo que cambio mañana.</div></div>
+        <div class="slot-right"><span class="slot-badge b-esc">ESCRITURA</span><div class="slot-dur">20 min</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-lect" onclick="toggle(this)">
+        <div class="slot-time">18:20<br>18:50</div>
+        <div class="slot-body"><div class="slot-name">Lectura</div><div class="slot-detail">Hoy: libro técnico.</div></div>
+        <div class="slot-right"><span class="slot-badge b-lect">LECTURA</span><div class="slot-dur">30 min</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-plan" onclick="toggle(this)">
+        <div class="slot-time">18:50<br>19:00</div>
+        <div class="slot-body"><div class="slot-name">Plan del mañana</div><div class="slot-detail">3 cosas que importan mañana.</div></div>
+        <div class="slot-right"><span class="slot-badge b-plan">PLAN</span><div class="slot-dur">10 min</div><div class="slot-check"></div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JUEVES -->
+  <div class="day-schedule" id="day-jue">
+    <div class="day-focus">
+      <strong>Jueves — Inglés profundo + MS365.</strong> El día más enfocado en inglés de la semana. Practicas las 4 habilidades: leer, escuchar, escribir y hablar. MS365 se suma en la tarde.
+    </div>
+    <div class="schedule-grid">
+
+      <div class="sep">Mañana</div>
+
+      <div class="slot c-bien" onclick="toggle(this)">
+        <div class="slot-time">8:30<br>9:00</div>
+        <div class="slot-body"><div class="slot-name">Despertar & rutina física</div><div class="slot-detail">Agua, movimiento, desayuno.</div></div>
+        <div class="slot-right"><span class="slot-badge b-bien">BIENESTAR</span><div class="slot-dur">30 min</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-eng" onclick="toggle(this)">
+        <div class="slot-time">9:00<br>9:45</div>
+        <div class="slot-body">
+          <div class="slot-name">Inglés — speaking en voz alta</div>
+          <div class="slot-detail">Grábate hablando en inglés 3 minutos sobre un tema libre. No importa si está mal — importa que hables. Escúchate y nota UNA mejora.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-eng">INGLÉS</span><div class="slot-dur">45 min</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="sep">Bloque Principal</div>
+
+      <div class="slot c-eng" onclick="toggle(this)">
+        <div class="slot-time">10:00<br>11:30</div>
+        <div class="slot-body">
+          <div class="slot-name">Inglés — clase estructurada</div>
+          <div class="slot-detail">Académica.mx o curso de Coursera. Una lección completa. Tomar notas en inglés. No en español.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-eng">INGLÉS</span><div class="slot-dur">1.5h</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-rest" onclick="toggle(this)">
+        <div class="slot-time">12:00<br>13:00</div>
+        <div class="slot-body"><div class="slot-name">Almuerzo & descanso</div><div class="slot-detail">Desconéctate. Recarga.</div></div>
+        <div class="slot-right"><span class="slot-badge b-rest">DESCANSO</span><div class="slot-dur">1h</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="sep">Tarde</div>
+
+      <div class="slot c-ms" onclick="toggle(this)">
+        <div class="slot-time">13:00<br>14:30</div>
+        <div class="slot-body">
+          <div class="slot-name">Microsoft 365 — práctica real</div>
+          <div class="slot-detail">Crea algo útil para ti: tu CV en Word bien formateado, una planilla de presupuesto en Excel, una presentación de tu portfolio en PowerPoint.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-ms">MS365</span><div class="slot-dur">1.5h</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-com" onclick="toggle(this)">
+        <div class="slot-time">14:30<br>15:15</div>
+        <div class="slot-body">
+          <div class="slot-name">Comunicación — mock interview</div>
+          <div class="slot-detail">Responde en voz alta: "¿Por qué debería contratarte?" o "Cuéntame de ti". Grábate. Mejora la estructura con PREP.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-com">COM</span><div class="slot-dur">45 min</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-rest" onclick="toggle(this)">
+        <div class="slot-time">15:15<br>16:30</div>
+        <div class="slot-body"><div class="slot-name">Pausa libre</div><div class="slot-detail">Tiempo para ti.</div></div>
+        <div class="slot-right"><span class="slot-badge b-rest">LIBRE</span><div class="slot-dur">1h</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="sep">Noche</div>
+
+      <div class="slot c-prog" onclick="toggle(this)">
+        <div class="slot-time">16:30<br>18:00</div>
+        <div class="slot-body">
+          <div class="slot-name">Programación — mantenimiento y repaso</div>
+          <div class="slot-detail">Revisar lo de la semana, limpiar código, o avanzar un ejercicio pendiente. Sin presión de aprender algo nuevo.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-prog">PROG</span><div class="slot-dur">1.5h</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-esc" onclick="toggle(this)">
+        <div class="slot-time">18:00<br>18:20</div>
+        <div class="slot-body"><div class="slot-name">Escritura — 3 oraciones del día</div><div class="slot-detail">Lo aprendido, lo que costó, lo que cambio mañana.</div></div>
+        <div class="slot-right"><span class="slot-badge b-esc">ESCRITURA</span><div class="slot-dur">20 min</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-lect" onclick="toggle(this)">
+        <div class="slot-time">18:20<br>18:50</div>
+        <div class="slot-body"><div class="slot-name">Lectura</div><div class="slot-detail">Hoy: libro de mentalidad, finanzas o comunicación.</div></div>
+        <div class="slot-right"><span class="slot-badge b-lect">LECTURA</span><div class="slot-dur">30 min</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-plan" onclick="toggle(this)">
+        <div class="slot-time">18:50<br>19:00</div>
+        <div class="slot-body"><div class="slot-name">Plan del mañana</div><div class="slot-detail">3 cosas que importan mañana.</div></div>
+        <div class="slot-right"><span class="slot-badge b-plan">PLAN</span><div class="slot-dur">10 min</div><div class="slot-check"></div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- VIERNES -->
+  <div class="day-schedule" id="day-vie">
+    <div class="day-focus">
+      <strong>Viernes — Carrera + Revisión.</strong> El día más estratégico. Aplicas trabajo, construyes tu marca, y cierras la semana con una revisión honesta. El viernes define el lunes.
+    </div>
+    <div class="schedule-grid">
+
+      <div class="sep">Mañana</div>
+
+      <div class="slot c-bien" onclick="toggle(this)">
+        <div class="slot-time">8:30<br>9:00</div>
+        <div class="slot-body"><div class="slot-name">Despertar & rutina física</div><div class="slot-detail">Agua, movimiento, desayuno.</div></div>
+        <div class="slot-right"><span class="slot-badge b-bien">BIENESTAR</span><div class="slot-dur">30 min</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-eng" onclick="toggle(this)">
+        <div class="slot-time">9:00<br>9:30</div>
+        <div class="slot-body">
+          <div class="slot-name">Inglés — repaso de la semana</div>
+          <div class="slot-detail">Revisar las palabras nuevas de la semana. Usarlas en oraciones propias. Consolidar antes del fin de semana.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-eng">INGLÉS</span><div class="slot-dur">30 min</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="sep">Bloque Principal</div>
+
+      <div class="slot c-car" onclick="toggle(this)">
+        <div class="slot-time">10:00<br>12:00</div>
+        <div class="slot-body">
+          <div class="slot-name">Búsqueda de trabajo / red profesional</div>
+          <div class="slot-detail">Enviar CVs, actualizar LinkedIn, conectar con personas del sector, responder mensajes. Trátalo como trabajo — es trabajo.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-car">CARRERA</span><div class="slot-dur">2h</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-rest" onclick="toggle(this)">
+        <div class="slot-time">12:00<br>13:00</div>
+        <div class="slot-body"><div class="slot-name">Almuerzo & descanso</div><div class="slot-detail">Desconéctate. Recarga.</div></div>
+        <div class="slot-right"><span class="slot-badge b-rest">DESCANSO</span><div class="slot-dur">1h</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="sep">Tarde</div>
+
+      <div class="slot c-esc" onclick="toggle(this)">
+        <div class="slot-time">13:00<br>14:00</div>
+        <div class="slot-body">
+          <div class="slot-name">Escritura — post o artículo de LinkedIn</div>
+          <div class="slot-detail">Algo que aprendiste esta semana. Corto, claro, tuyo. Publicar es comprometerse. Hazlo aunque no sea perfecto.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-esc">ESCRITURA</span><div class="slot-dur">1h</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-dis" onclick="toggle(this)">
+        <div class="slot-time">14:00<br>15:00</div>
+        <div class="slot-body">
+          <div class="slot-name">Diseño — proyecto personal</div>
+          <div class="slot-detail">Aplicar lo aprendido: diseñar algo para tu portfolio, mejorar tu CV visual, o crear una imagen para el post de LinkedIn.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-dis">DISEÑO</span><div class="slot-dur">1h</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-rest" onclick="toggle(this)">
+        <div class="slot-time">15:00<br>16:30</div>
+        <div class="slot-body"><div class="slot-name">Pausa libre</div><div class="slot-detail">Tiempo para ti. Te lo ganaste.</div></div>
+        <div class="slot-right"><span class="slot-badge b-rest">LIBRE</span><div class="slot-dur">1.5h</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="sep">Cierre de Semana</div>
+
+      <div class="slot c-plan" onclick="toggle(this)">
+        <div class="slot-time">16:30<br>17:00</div>
+        <div class="slot-body">
+          <div class="slot-name">Revisión semanal</div>
+          <div class="slot-detail">¿Qué aprendí? ¿Qué mejoré? ¿Qué evité? ¿Qué hago diferente la próxima semana? 3 respuestas honestas. Sin juicio — con ajuste.</div>
+        </div>
+        <div class="slot-right"><span class="slot-badge b-plan">REVISIÓN</span><div class="slot-dur">30 min</div><div class="slot-check"></div></div>
+      </div>
+
+      <div class="slot c-lect" onclick="toggle(this)">
+        <div class="slot-time">17:00<br>17:30</div>
+        <div class="slot-body"><div class="slot-name">Lectura libre</div><div class="slot-detail">Lo que más ganas tengas de leer. Sin obligación de tema.</div></div>
+        <div class="slot-right"><span class="slot-badge b-lect">LECTURA</span><div class="slot-dur">30 min</div><div class="slot-check"></div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RESUMEN SEMANAL -->
+  <div class="summary">
+    <div class="summary-title">Resumen semanal · horas totales de estudio</div>
+    <div class="summary-grid">
+      <div class="sum-item">
+        <div class="sum-dot" style="background:var(--prog)"></div>
+        <div class="sum-info">
+          <div class="sum-name">Programación</div>
+          <div class="sum-time">~10h / semana</div>
+          <div class="sum-bar-track"><div class="sum-bar-fill" style="width:100%; background:var(--prog)"></div></div>
+        </div>
+      </div>
+      <div class="sum-item">
+        <div class="sum-dot" style="background:var(--eng)"></div>
+        <div class="sum-info">
+          <div class="sum-name">Inglés</div>
+          <div class="sum-time">~6h / semana</div>
+          <div class="sum-bar-track"><div class="sum-bar-fill" style="width:60%; background:var(--eng)"></div></div>
+        </div>
+      </div>
+      <div class="sum-item">
+        <div class="sum-dot" style="background:var(--com)"></div>
+        <div class="sum-info">
+          <div class="sum-name">Comunicación</div>
+          <div class="sum-time">~3h / semana</div>
+          <div class="sum-bar-track"><div class="sum-bar-fill" style="width:30%; background:var(--com)"></div></div>
+        </div>
+      </div>
+      <div class="sum-item">
+        <div class="sum-dot" style="background:var(--esc)"></div>
+        <div class="sum-info">
+          <div class="sum-name">Escritura</div>
+          <div class="sum-time">~3h / semana</div>
+          <div class="sum-bar-track"><div class="sum-bar-fill" style="width:30%; background:var(--esc)"></div></div>
+        </div>
+      </div>
+      <div class="sum-item">
+        <div class="sum-dot" style="background:var(--dis)"></div>
+        <div class="sum-info">
+          <div class="sum-name">Diseño Digital</div>
+          <div class="sum-time">~2.5h / semana</div>
+          <div class="sum-bar-track"><div class="sum-bar-fill" style="width:25%; background:var(--dis)"></div></div>
+        </div>
+      </div>
+      <div class="sum-item">
+        <div class="sum-dot" style="background:var(--ms)"></div>
+        <div class="sum-info">
+          <div class="sum-name">MS365</div>
+          <div class="sum-time">~2h / semana</div>
+          <div class="sum-bar-track"><div class="sum-bar-fill" style="width:20%; background:var(--ms)"></div></div>
+        </div>
+      </div>
+      <div class="sum-item">
+        <div class="sum-dot" style="background:var(--car)"></div>
+        <div class="sum-info">
+          <div class="sum-name">Carrera</div>
+          <div class="sum-time">~2h / semana</div>
+          <div class="sum-bar-track"><div class="sum-bar-fill" style="width:20%; background:var(--car)"></div></div>
+        </div>
+      </div>
+      <div class="sum-item">
+        <div class="sum-dot" style="background:var(--lect)"></div>
+        <div class="sum-info">
+          <div class="sum-name">Lectura</div>
+          <div class="sum-time">~2.5h / semana</div>
+          <div class="sum-bar-track"><div class="sum-bar-fill" style="width:25%; background:var(--lect)"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGLAS -->
+  <div class="rules">
+    <h3>⚡ Las 5 reglas de esta rutina</h3>
+    <div class="rule"><div class="rule-n">01</div><div>Los descansos son parte del plan. Sin ellos, el cerebro no absorbe. No los saltes.</div></div>
+    <div class="rule"><div class="rule-n">02</div><div>El inglés va todos los días sin excepción. Es el hábito más corto y el que más acumula a largo plazo.</div></div>
+    <div class="rule"><div class="rule-n">03</div><div>Si un día fallas, el siguiente vuelves. No recuperes lo perdido — simplemente continúas.</div></div>
+    <div class="rule"><div class="rule-n">04</div><div>La revisión del viernes es sagrada. Es el momento donde decides si la semana que viene es mejor o igual.</div></div>
+    <div class="rule"><div class="rule-n">05</div><div>El fin de semana es tuyo. Sin culpa. Una mente descansada aprende más rápido que una agotada.</div></div>
+  </div>
+
+  <div class="quote">
+    <p>No es intensidad lo que necesitas.<br>Es <span>consistencia con dirección.</span></p>
+    <small>Tu plan · Tu ritmo · Tu versión · Sary 2026</small>
+  </div>
+
+</div>
+
+<script>
+  function showDay(id) {
+    document.querySelectorAll('.day-schedule').forEach(d => d.classList.remove('active'));
+    document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('day-' + id).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  function toggle(el) {
+    el.classList.toggle('done');
+    const check = el.querySelector('.slot-check');
+    check.textContent = el.classList.contains('done') ? '✓' : '';
+  }
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js', { scope: './' })
+      .then(function (r) { console.log('[PWA] SW:', r.scope); })
+      .catch(function (e) { console.info('[PWA] Requiere HTTPS:', e.message); });
+  });
+}
+</script>
+</body>
+</html>
